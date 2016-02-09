@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -55,9 +56,12 @@ func (o *Orderup) RequestHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := o.parseCmd(r.PostForm["text"][0])
 
 	// Execute command
-	response := o.execCmd(cmd)
-
-	io.WriteString(w, response)
+	if response, inChannel := o.execCmd(cmd); inChannel {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, fmt.Sprintf(`{"response_type":"in_channel","text":"%s"}`, response))
+	} else {
+		io.WriteString(w, response)
+	}
 }
 
 // Parse command from the request string.
@@ -75,7 +79,7 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 }
 
 // Execute command.
-func (o *Orderup) execCmd(cmd *Cmd) string {
+func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
 	switch cmd.Name {
 	case "create-restaurant":
 		return o.createRestaurant(cmd)
