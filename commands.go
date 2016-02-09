@@ -160,6 +160,55 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 	return result, false
 }
 
+// history command
+// history [restaurant name]
+func (o *Orderup) history(cmd *Cmd) (string, bool) {
+	var ordersList []Order
+
+	if len(cmd.Args) != 1 {
+		return o.errorMessage("Wrong arguments"), false
+	}
+
+	restaurantName := cmd.Args[0]
+
+	err := o.db.View(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(RESTAURANTS))
+
+		restaurant := b.Bucket([]byte(restaurantName))
+		if restaurant == nil {
+			return errors.New(fmt.Sprintf("Restaurant %s does not exist", restaurantName))
+		}
+
+		orders := restaurant.Bucket([]byte(HISTORY))
+		c := orders.Cursor()
+
+		// Iterate over all orders, decode and store in the history list
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			order := Order{}
+			if err := json.Unmarshal(v, &order); err != nil {
+				return err
+			}
+
+			ordersList = append(ordersList, order)
+		}
+
+		return
+	})
+
+	if err != nil {
+		return err.Error(), false
+	}
+
+	// Format orders list properly
+	result := fmt.Sprintf("%s: history:\n", restaurantName)
+	for _, order := range ordersList {
+		result += order.String() + "\n"
+	}
+
+	return result, false
+}
+
 // finish-order command
 // finish-order [restaurant name] [order id]
 func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
@@ -190,7 +239,7 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
 		orders := restaurant.Bucket([]byte(ORDERLIST))
 		history := restaurant.Bucket([]byte(HISTORY))
 
-		if orderId > orders.Stats().KeyN {
+		if orderId > orders.Stats().KeyN+1 {
 			return errors.New("Too big order id. Order does not exist yet.")
 		}
 
@@ -226,6 +275,7 @@ func (o *Orderup) help(cmd *Cmd) (string, bool) {
 				/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.
 				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
 				/orderup finish-order [restaurant name]  [order id] -- Finish order.
+				/orderup history [restaurant name] -- Show history for restaurant name.
 				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, false
 }
 

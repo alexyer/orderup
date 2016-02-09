@@ -89,6 +89,8 @@ func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
 		return o.finishOrder(cmd)
 	case "list":
 		return o.list(cmd)
+	case "history":
+		return o.history(cmd)
 	default:
 		return o.help(cmd)
 	}
