@@ -19,12 +19,6 @@ type Orderup struct {
 	db *bolt.DB
 }
 
-type Order struct {
-	Username string `json:username`
-	Order    string `json:order`
-	Id       int    `json:id`
-}
-
 func NewOrderup(dbFile string) (*Orderup, error) {
 	db, err := initDb(dbFile)
 	if err != nil {
@@ -87,6 +81,8 @@ func (o *Orderup) execCmd(cmd *Cmd) string {
 		return o.createRestaurant(cmd)
 	case "create-order":
 		return o.createOrder(cmd)
+	case "list":
+		return o.list(cmd)
 	default:
 		return o.help(cmd)
 	}

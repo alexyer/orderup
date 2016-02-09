@@ -84,7 +84,7 @@ func (o *Orderup) createOrder(cmd *Cmd) string {
 
 		// Prepare order data
 		id, _ = orders.NextSequence()
-		order = strings.Join(cmd.Args, " ")
+		order = strings.Join(cmd.Args[2:], " ")
 		orderCount = orders.Stats().KeyN
 
 		// JSON serialize order
@@ -110,11 +110,61 @@ func (o *Orderup) createOrder(cmd *Cmd) string {
 		restaurantName, int(id), username, order, order, orderCount)
 }
 
+// list command
+// list [restaurant name]
+func (o *Orderup) list(cmd *Cmd) string {
+	var ordersList []Order
+
+	if len(cmd.Args) != 1 {
+		return o.errorMessage("Wrong arguments")
+	}
+
+	restaurantName := cmd.Args[0]
+
+	err := o.db.View(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(RESTAURANTS))
+
+		restaurant := b.Bucket([]byte(restaurantName))
+		if restaurant == nil {
+			return errors.New(fmt.Sprintf("Restaurant %s does not exist", restaurantName))
+		}
+
+		orders := restaurant.Bucket([]byte(ORDERLIST))
+		c := orders.Cursor()
+
+		// Iterate over all orders, decode and store in the orders list
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			order := Order{}
+			if err := json.Unmarshal(v, &order); err != nil {
+				return err
+			}
+
+			ordersList = append(ordersList, order)
+		}
+
+		return
+	})
+
+	if err != nil {
+		return err.Error()
+	}
+
+	// Format orders list properly
+	result := ""
+	for _, order := range ordersList {
+		result += order.String() + "\n"
+	}
+
+	return result
+}
+
 // help command.
 func (o *Orderup) help(cmd *Cmd) string {
 	return `Available commands:
 				/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.
-				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.`
+				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
+				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`
 }
 
 // Helper function. Return error message with help contents.
