@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/boltdb/bolt"
+	"github.com/alexyer/work/orderup-bot/Godeps/_workspace/src/github.com/boltdb/bolt"
 )
 
 // Command struct.

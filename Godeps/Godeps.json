@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/alexyer/work/orderup-bot",
+	"GoVersion": "go1.5.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.1.0-67-g2f846c3",
+			"Rev": "2f846c3551b76d7710f159be840d66c3d064abbe"
+		}
+	]
+}
