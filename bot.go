@@ -81,6 +81,8 @@ func (o *Orderup) execCmd(cmd *Cmd) string {
 		return o.createRestaurant(cmd)
 	case "create-order":
 		return o.createOrder(cmd)
+	case "finish-order":
+		return o.finishOrder(cmd)
 	case "list":
 		return o.list(cmd)
 	default:
