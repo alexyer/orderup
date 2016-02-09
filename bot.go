@@ -30,6 +30,30 @@ func NewOrderup(dbFile string) (*Orderup, error) {
 	}, nil
 }
 
+// Open an initialize database.
+func initDb(dbFile string) (*bolt.DB, error) {
+	db, err := bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := db.Begin(true)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.CreateBucketIfNotExists([]byte(RESTAURANTS)); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
 // Handle requests to orderup bot.
 func (o *Orderup) RequestHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request
@@ -66,10 +90,9 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 func (o *Orderup) execCmd(cmd *Cmd) string {
 	switch cmd.Name {
 	case "create-restaurant":
-		return createRestaurant(cmd)
+		return o.createRestaurant(cmd)
 	default:
-		return `Available commands:
-					/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.`
+		return o.help(cmd)
 	}
 }
 
