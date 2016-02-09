@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alexyer/work/orderup-bot/Godeps/_workspace/src/github.com/boltdb/bolt"
+	"github.com/boltdb/bolt"
 )
 
 // create-restaurant command.
