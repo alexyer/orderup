@@ -1,59 +1,48 @@
 package main
 
 import (
-	"io"
+	"flag"
+	"fmt"
+	"log"
 	"net/http"
-	"strings"
+	"os"
+	"os/signal"
 )
 
-// Command struct.
-type Cmd struct {
-	Name string   // Command name
-	Args []string // List of command arguments
-}
+var (
+	host string
+	port int
+	db   string
+)
 
-// Handle requests to orderup bot.
-func orderup(w http.ResponseWriter, r *http.Request) {
-	// Parse request
-	err := r.ParseForm()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Get command text from the request and split arguments.
-	cmd := parseCmd(r.PostForm["text"][0])
-
-	// Execute command
-	response := execCmd(cmd)
-
-	io.WriteString(w, response)
-}
-
-func parseCmd(cmd string) *Cmd {
-	if cmdLst := strings.Split(cmd, " "); len(cmdLst) == 1 {
-		return &Cmd{
-			Name: cmdLst[0],
-		}
-	} else {
-		return &Cmd{
-			Name: cmdLst[0],
-			Args: cmdLst[1:],
-		}
-	}
-}
-
-func execCmd(cmd *Cmd) string {
-	switch cmd.Name {
-	case "create-restaurant":
-		return createRestaurant(cmd)
-	default:
-		return `Available commands:
-					/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.`
-	}
+func init() {
+	flag.StringVar(&host, "host", "localhost", "host to listen")
+	flag.IntVar(&port, "port", 5000, "port to listen")
+	flag.StringVar(&db, "db", "orderup.db", "database file")
 }
 
 func main() {
-	http.HandleFunc("/", orderup)
-	http.ListenAndServe(":4242", nil)
+	flag.Parse()
+
+	// Create new instance of bot.
+	bot, err := NewOrderup(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Configure shutdown process.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for _ = range c {
+			bot.Shutdown()
+			os.Exit(0)
+		}
+	}()
+
+	log.Printf("Orderup started on %s:%d.\n", host, port)
+
+	http.HandleFunc("/orderup", bot.RequestHandler)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
 }
