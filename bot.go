@@ -19,8 +19,14 @@ type Orderup struct {
 	db *bolt.DB
 }
 
+type Order struct {
+	Username string `json:username`
+	Order    string `json:order`
+	Id       int    `json:id`
+}
+
 func NewOrderup(dbFile string) (*Orderup, error) {
-	db, err := bolt.Open(dbFile, 0600, nil)
+	db, err := initDb(dbFile)
 	if err != nil {
 		return nil, err
 	}
@@ -33,25 +39,13 @@ func NewOrderup(dbFile string) (*Orderup, error) {
 // Open an initialize database.
 func initDb(dbFile string) (*bolt.DB, error) {
 	db, err := bolt.Open(dbFile, 0600, nil)
-	if err != nil {
-		return nil, err
-	}
 
-	tx, err := db.Begin(true)
-	if err != nil {
-		return nil, err
-	}
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(RESTAURANTS))
+		return err
+	})
 
-	if _, err := tx.CreateBucketIfNotExists([]byte(RESTAURANTS)); err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	return db, err
 }
 
 // Handle requests to orderup bot.
@@ -91,6 +85,8 @@ func (o *Orderup) execCmd(cmd *Cmd) string {
 	switch cmd.Name {
 	case "create-restaurant":
 		return o.createRestaurant(cmd)
+	case "create-order":
+		return o.createOrder(cmd)
 	default:
 		return o.help(cmd)
 	}
