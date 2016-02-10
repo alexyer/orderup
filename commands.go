@@ -18,9 +18,9 @@ import (
 func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool) {
 	switch {
 	case len(cmd.Args) == 0:
-		return "Restaurant name is not given.", false
+		return "Restaurant name is not given.", true
 	case len(cmd.Args) != 1:
-		return "Spaces are not allowed in restaurant name.", false
+		return "Spaces are not allowed in restaurant name.", true
 	}
 
 	name := cmd.Args[0]
@@ -44,10 +44,10 @@ func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
-	return fmt.Sprintf("%s restaurant created.", name), false
+	return fmt.Sprintf("%s restaurant created.", name), true
 }
 
 // create-order command.
@@ -62,12 +62,12 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
 	)
 	switch {
 	case len(cmd.Args) < 3:
-		return o.errorMessage("Wrong arguments"), false
+		return o.errorMessage("Wrong arguments"), true
 	}
 
 	username = cmd.Args[1]
 	if username[0] != '@' {
-		return o.errorMessage("Missing username"), false
+		return o.errorMessage("Missing username"), true
 	}
 
 	restaurantName = cmd.Args[0]
@@ -104,11 +104,11 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	return fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
-		restaurantName, int(id), username, order, order, orderCount), false
+		restaurantName, int(id), username, order, order, orderCount), true
 }
 
 // list command
@@ -117,7 +117,7 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 	var ordersList []Order
 
 	if len(cmd.Args) != 1 {
-		return o.errorMessage("Wrong arguments"), false
+		return o.errorMessage("Wrong arguments"), true
 	}
 
 	restaurantName := cmd.Args[0]
@@ -148,7 +148,7 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	// Format orders list properly
@@ -157,7 +157,7 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 		result += order.String() + "\n"
 	}
 
-	return result, false
+	return result, true
 }
 
 // history command
@@ -166,7 +166,7 @@ func (o *Orderup) history(cmd *Cmd) (string, bool) {
 	var ordersList []Order
 
 	if len(cmd.Args) != 1 {
-		return o.errorMessage("Wrong arguments"), false
+		return o.errorMessage("Wrong arguments"), true
 	}
 
 	restaurantName := cmd.Args[0]
@@ -197,7 +197,7 @@ func (o *Orderup) history(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	// Format orders list properly
@@ -206,7 +206,7 @@ func (o *Orderup) history(cmd *Cmd) (string, bool) {
 		result += order.String() + "\n"
 	}
 
-	return result, false
+	return result, true
 }
 
 // finish-order command
@@ -218,13 +218,13 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
 	)
 
 	if len(cmd.Args) != 2 {
-		return o.errorMessage("Wrong arguments"), false
+		return o.errorMessage("Wrong arguments"), true
 	}
 
 	restaurantName := cmd.Args[0]
 	orderId, err := strconv.Atoi(cmd.Args[1])
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	err = o.db.Batch(func(tx *bolt.Tx) (err error) {
@@ -258,11 +258,11 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	if err := json.Unmarshal(orderData, &order); err != nil {
-		return err.Error(), false
+		return err.Error(), true
 	}
 
 	return fmt.Sprintf("%s your order is finished. %s: Order: %d. %s",
@@ -276,7 +276,7 @@ func (o *Orderup) help(cmd *Cmd) (string, bool) {
 				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
 				/orderup finish-order [restaurant name]  [order id] -- Finish order.
 				/orderup history [restaurant name] -- Show history for restaurant name.
-				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, false
+				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, true
 }
 
 // Helper function. Return error message with help contents.
