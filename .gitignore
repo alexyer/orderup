@@ -5,4 +5,5 @@ Session.vim
 .netrwhist
 *~
 
-orderup.db
+*.db
+orderup
