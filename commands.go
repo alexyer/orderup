@@ -44,7 +44,7 @@ func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 
 	name := cmd.Args[0]
 
-	if err := o.deleateQueue([]byte(name)); err != nil {
+	if err := o.deleteQueue([]byte(name)); err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 

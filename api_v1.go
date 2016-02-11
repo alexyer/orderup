@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Get APIv1 layout.
 func (o *Orderup) getAPIv1() *API {
 	return &API{
 		Routes: []Route{
@@ -24,18 +25,13 @@ func (o *Orderup) getAPIv1() *API {
 				HandlerFunc: o.createQueueAPIHandler,
 				Methods:     []string{"POST"},
 			},
+			Route{
+				Path:        API_PREFIX + "/v1/queues",
+				HandlerFunc: o.deleteQueueAPIHandler,
+				Methods:     []string{"DELETE"},
+			},
 		},
 	}
-}
-
-// Sturctures for encoding/decoding API calls.
-
-type queueRequest struct {
-	Name string `json:name`
-}
-
-type queueResponse struct {
-	Response string `json:"response"`
 }
 
 func (o *Orderup) writeAPIResponse(w http.ResponseWriter, response []byte) {
@@ -103,8 +99,8 @@ func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return struct {
-			Response string
-			Orders   *[]Order
+			Response string   `json:"response"`
+			Orders   *[]Order `json:"orders"`
 		}{
 			Response: "success",
 			Orders:   orders,
@@ -125,8 +121,8 @@ func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return struct {
-			Response string
-			Orders   *[]Order
+			Response string   `json:"response"`
+			Orders   *[]Order `json:"orders"`
 		}{
 			Response: "success",
 			Orders:   orders,
@@ -150,6 +146,26 @@ func (o *Orderup) createQueueAPIHandler(w http.ResponseWriter, r *http.Request) 
 			Response string
 		}{
 			Response: fmt.Sprintf("Queue %s created.", req["name"]),
+		}, nil
+	})
+}
+
+// delete-q command.
+func (o *Orderup) deleteQueueAPIHandler(w http.ResponseWriter, r *http.Request) {
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" {
+			return nil, WrongArgsError()
+		}
+
+		cmdErr := o.deleteQueue([]byte(req["name"]))
+		if cmdErr != nil {
+			return nil, cmdErr
+		}
+
+		return struct {
+			Response string
+		}{
+			Response: fmt.Sprintf("Queue %s deleted.", req["name"]),
 		}, nil
 	})
 }

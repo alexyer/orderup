@@ -81,7 +81,7 @@ func (o *Orderup) createQueue(name []byte) error {
 }
 
 // Delete queue <name>.
-func (o *Orderup) deleateQueue(name []byte) error {
+func (o *Orderup) deleteQueue(name []byte) error {
 	return o.db.Update(func(tx *bolt.Tx) (err error) {
 		// Get bucket with restaurants.
 		b := tx.Bucket([]byte(RESTAURANTS))
