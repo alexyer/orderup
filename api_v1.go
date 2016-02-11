@@ -30,15 +30,6 @@ func (o *Orderup) getAPIv1() *API {
 
 // Sturctures for encoding/decoding API calls.
 
-type listRequest struct {
-	Name string `json:name`
-}
-
-type listResponse struct {
-	Response string   `json:"response"`
-	Orders   *[]Order `json:"orders"`
-}
-
 type queueRequest struct {
 	Name string `json:name`
 }
@@ -69,112 +60,96 @@ func (o *Orderup) writeAPIErrorResponse(w http.ResponseWriter, apiErr error) {
 	w.Write(response)
 }
 
-// list command.
-func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
+// Actual API call - createQueue, getHistoryList, etc.
+// Decode request into map, executes API call and returns response.
+type apiAction func(map[string]string) (interface{}, error)
+
+func (o *Orderup) apiHandler(w http.ResponseWriter, r *http.Request, exec apiAction) {
+	// Decode API request.
 	decoder := json.NewDecoder(r.Body)
 
-	req := &listRequest{}
+	req := make(map[string]string)
 
 	if err := decoder.Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if req.Name == "" {
-		o.writeAPIErrorResponse(w, WrongArgsError())
-		return
-	}
-
-	orders, cmdErr := o.getPendingOrderList([]byte(req.Name))
-
-	if cmdErr != nil {
+	// Execute API call
+	if response, cmdErr := exec(req); cmdErr != nil {
 		o.writeAPIErrorResponse(w, cmdErr)
 		return
-	}
+	} else {
+		buf, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	apiResponse := &listResponse{
-		Response: "success",
-		Orders:   orders,
+		o.writeAPIResponse(w, buf)
 	}
+}
 
-	response, err := json.Marshal(apiResponse)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+// list command.
+func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" {
+			return nil, WrongArgsError()
+		}
 
-	o.writeAPIResponse(w, response)
+		orders, cmdErr := o.getPendingOrderList([]byte(req["name"]))
+		if cmdErr != nil {
+			return nil, cmdErr
+		}
+
+		return struct {
+			Response string
+			Orders   *[]Order
+		}{
+			Response: "success",
+			Orders:   orders,
+		}, nil
+	})
 }
 
 // history command.
 func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" {
+			return nil, WrongArgsError()
+		}
 
-	req := &listRequest{}
+		orders, cmdErr := o.getHistoryList([]byte(req["name"]))
+		if cmdErr != nil {
+			return nil, cmdErr
+		}
 
-	if err := decoder.Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if req.Name == "" {
-		o.writeAPIErrorResponse(w, WrongArgsError())
-		return
-	}
-
-	orders, cmdErr := o.getHistoryList([]byte(req.Name))
-
-	if cmdErr != nil {
-		o.writeAPIErrorResponse(w, cmdErr)
-		return
-	}
-
-	apiResponse := &listResponse{
-		Response: "success",
-		Orders:   orders,
-	}
-
-	response, err := json.Marshal(apiResponse)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	o.writeAPIResponse(w, response)
+		return struct {
+			Response string
+			Orders   *[]Order
+		}{
+			Response: "success",
+			Orders:   orders,
+		}, nil
+	})
 }
 
 // create-q command.
 func (o *Orderup) createQueueAPIHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" {
+			return nil, WrongArgsError()
+		}
 
-	req := &queueRequest{}
+		cmdErr := o.createQueue([]byte(req["name"]))
+		if cmdErr != nil {
+			return nil, cmdErr
+		}
 
-	if err := decoder.Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if req.Name == "" {
-		o.writeAPIErrorResponse(w, WrongArgsError())
-		return
-	}
-
-	cmdErr := o.createQueue([]byte(req.Name))
-
-	if cmdErr != nil {
-		o.writeAPIErrorResponse(w, cmdErr)
-		return
-	}
-
-	apiResponse := &listResponse{
-		Response: fmt.Sprintf("Queue %s created.", req.Name),
-	}
-
-	response, err := json.Marshal(apiResponse)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	o.writeAPIResponse(w, response)
+		return struct {
+			Response string
+		}{
+			Response: fmt.Sprintf("Queue %s created.", req["name"]),
+		}, nil
+	})
 }
