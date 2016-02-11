@@ -7,7 +7,7 @@ We are busy. It makes us grumpy sometimes. And when people interrupt us on slack
 
 We could just use a ticketing system, and tell people to file a ticket, but the culture of slack isn't like that. We like doing things in real time, and we encourage some degree of interruptions and impromptu conversations. But we do need some order to the madness, and a queue makes sense. It's better than "I'm busy, get lost." It's more like "here's what I'm up to, you're next."
 
-So we built orderup. It's just like a restaurant. In fact, it is a restaurant. You are a restaurant. When someone asks you for something, you give them an order number, cook something up and serve it to them. Your burger will be ready after I make fries for that guy over there. Now replace burger and fries with insurance quote, git commit, phone call, whatever.
+So we built orderup. It's just like a restaurant. When someone asks you for something, you give them an order number, cook something up and serve it to them. Your burger will be ready after I make fries for that guy over there. Now replace burger and fries with insurance quote, git commit, phone call, whatever.
 
 ## Setup
 
@@ -18,7 +18,7 @@ So we built orderup. It's just like a restaurant. In fact, it is a restaurant. Y
     Method: POST
     Other fields are optional.
 1. Run `make build && make install`
-2. `orderup -host yourhost.com -port 5000 -db database.db`
+2. `nohup orderup -host 162.243.114.162 -port 5000 -db database.db -passphrase secret11722 &`
 
 ## Commands
 
@@ -26,11 +26,11 @@ So we built orderup. It's just like a restaurant. In fact, it is a restaurant. Y
 
 Shows help on all commands
 
-### `/orderup create-restaurant mynoodles`
+### `/orderup create-q mynoodles`
 
-This will create a list of order numbers for restaurant mynoodles.
+This will create orders for my queue named mynoodles.
 
-mynoodles restaurant created.
+mynoodles queue created.
 
 ### `/orderup create-order mynoodles @jimuser pork sandwich`
 
@@ -62,3 +62,24 @@ Mynoodles history:
 
 Etc....
 
+### Using CURL
+
+You can use CURL instead of Slack if you want.
+
+`curl -H "Content-Type: application/json" -X POST -d '{"name":"mynoodles"}' http://162.243.114.162:5000/api/v1/queues`
+
+`curl -H "Content-Type: application/json" -X DELETE -d '{"name":"mynoodles"}' http://162.243.114.162:5000/api/v1/queues`
+
+`curl -H "Content-Type: application/json" -X POST -d '{"name":"mynoodles","user":"jimmy","description":"a hamburger"}' http://162.243.114.162:5000/api/v1/queues/order`
+
+`curl -H "Content-Type: application/json" -X PUT -d '{"name":"mynoodles","id":"1"}' http://162.243.114.162:5000/api/v1/queues/orders/finish`
+
+`curl -H "Content-Type: application/json" -X GET -d '{"name":"mynoodles"}' http://162.243.114.162:5000/api/v1/queues/orders/list`
+
+`curl -H "Content-Type: application/json" -X GET -d '{"name":"mynoodles"}' http://162.243.114.162:5000/api/v1/queues/orders/history`
+
+`curl -H "Content-Type: application/json" -X POST -d '{"name":"mynoodles","user":"jimmy","description":"a hamburger"}' http://162.243.114.162:5000/api/v1/queues/order`
+
+If -passcode flag is specified when the service started, BasicAuth headers should be added
+
+`curl -u :passphrase -H "Content-Type: application/json" -X POST -d '{"name":"mynoodles","user":"jimmy","description":"a hamburger"}' http://162.243.114.162:5000/api/v1/queues/order`
