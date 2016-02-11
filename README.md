@@ -18,7 +18,7 @@ So we built orderup. It's just like a restaurant. When someone asks you for some
     Method: POST
     Other fields are optional.
 1. Run `make build && make install`
-2. `nohup orderup -host 162.243.114.162 -port 5000 -db database.db -passphrase secret11722 &`
+2. `nohup orderup -host 162.243.114.162 -port 5000 -db database.db -passcode secret11722 &`
 
 ## Commands
 
