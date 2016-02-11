@@ -13,7 +13,7 @@ import (
 func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
-		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
+		return "", true, NewOrderupError("Queue name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
 		return "", true, NewOrderupError("Spaces are not allowed in queue name.", ARG_ERR)
 	}
@@ -32,7 +32,7 @@ func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
-		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
+		return "", true, NewOrderupError("Queue name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
 		return "", true, NewOrderupError("Spaces are not allowed in queue name.", ARG_ERR)
 	}
@@ -43,7 +43,7 @@ func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	return fmt.Sprintf("Restaurant: %s deleted.", name), true, nil
+	return fmt.Sprintf("Queue: %s deleted.", name), true, nil
 }
 
 // create-order command.
@@ -87,15 +87,15 @@ func (o *Orderup) listCmd(cmd *Cmd) (string, bool, *OrderupError) {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
-	restaurantName := cmd.Args[0]
+	queueName := cmd.Args[0]
 
-	ordersList, err := o.getPendingOrderList([]byte(restaurantName))
+	ordersList, err := o.getPendingOrderList([]byte(queueName))
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	// Format orders list properly
-	result := fmt.Sprintf("%s: history:\n", restaurantName)
+	result := fmt.Sprintf("%s: history:\n", queueName)
 	for _, order := range *ordersList {
 		result += order.String() + "\n"
 	}
@@ -110,15 +110,15 @@ func (o *Orderup) historyCmd(cmd *Cmd) (string, bool, *OrderupError) {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
-	restaurantName := cmd.Args[0]
+	queueName := cmd.Args[0]
 
-	history, err := o.getHistoryList([]byte(restaurantName))
+	history, err := o.getHistoryList([]byte(queueName))
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	// Format orders list properly
-	result := fmt.Sprintf("%s: history:\n", restaurantName)
+	result := fmt.Sprintf("%s: history:\n", queueName)
 	for _, order := range *history {
 		result += order.String() + "\n"
 	}

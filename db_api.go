@@ -18,7 +18,7 @@ func (o *Orderup) getOrderList(queueName []byte, bucket []byte) (*[]Order, error
 	var orderList []Order
 
 	err := o.db.View(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
+		// Get bucket with queues.
 		b := tx.Bucket([]byte(QUEUES))
 
 		queue := b.Bucket(queueName)
@@ -63,7 +63,7 @@ func (o *Orderup) getHistoryList(queue []byte) (*[]Order, error) {
 // Create new queue <name>.
 func (o *Orderup) createQueue(name []byte) error {
 	return o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
+		// Get bucket with queues.
 		b := tx.Bucket([]byte(QUEUES))
 
 		// Create new bucket for the new queue.
@@ -85,12 +85,12 @@ func (o *Orderup) createQueue(name []byte) error {
 // Delete queue <name>.
 func (o *Orderup) deleteQueue(name []byte) error {
 	return o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
+		// Get bucket with queues.
 		b := tx.Bucket([]byte(QUEUES))
 
 		// Create new bucket for the new queue.
 		if err = b.DeleteBucket(name); err != nil {
-			return errors.New("Restaurant does not exist.")
+			return errors.New("Queue does not exist.")
 		}
 
 		return err
@@ -106,7 +106,7 @@ func (o *Orderup) createOrder(queueName []byte, username, orderStr string) (*Ord
 	)
 
 	err := o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
+		// Get bucket with queues.
 		b := tx.Bucket([]byte(QUEUES))
 
 		queue := b.Bucket(queueName)
@@ -150,12 +150,12 @@ func (o *Orderup) finishOrder(queueName []byte, orderId int) (*Order, error) {
 	)
 
 	err := o.db.Batch(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
+		// Get bucket with queues.
 		b := tx.Bucket([]byte(QUEUES))
 
 		queue := b.Bucket(queueName)
 		if queue == nil {
-			return errors.New(fmt.Sprintf("Restaurant %s does not exist", queue))
+			return errors.New(fmt.Sprintf("Queue %s does not exist", queue))
 		}
 
 		orders := queue.Bucket([]byte(ORDERLIST))
