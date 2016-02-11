@@ -59,7 +59,39 @@ func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orders, cmdErr := o.getOrderList([]byte(req.Name))
+	orders, cmdErr := o.getPendingOrderList([]byte(req.Name))
+
+	if cmdErr != nil {
+		o.writeAPIErrorResponse(w, cmdErr)
+		return
+	}
+
+	apiResponse := &listResponse{
+		Response: "success",
+		Orders:   orders,
+	}
+
+	response, err := json.Marshal(apiResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	o.writeAPIResponse(w, response)
+}
+
+// history command.
+func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+
+	req := &listRequest{}
+
+	if err := decoder.Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	orders, cmdErr := o.getHistoryList([]byte(req.Name))
 
 	if cmdErr != nil {
 		o.writeAPIErrorResponse(w, cmdErr)
