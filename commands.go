@@ -13,9 +13,9 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// create-restaurant command.
-// create-restaurant [restaurant name]
-func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
+// create-q command.
+// create-q [restaurant name]
+func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
 		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
@@ -25,29 +25,11 @@ func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
 
 	name := cmd.Args[0]
 
-	err := o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
-
-		// Create new bucket for the new restaurant.
-		r, err := b.CreateBucket([]byte(name))
-		if err != nil {
-			return errors.New("Restaurant already exists.")
-		}
-
-		// Create 2 subbucktes.
-		// One for pending orders, another for finished orders.
-		_, err = r.CreateBucket([]byte(ORDERLIST))
-		_, err = r.CreateBucket([]byte(HISTORY))
-
-		return err
-	})
-
-	if err != nil {
+	if err := o.createQueue([]byte(name)); err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	return fmt.Sprintf("%s restaurant created.", name), true, nil
+	return fmt.Sprintf("%s queue created.", name), true, nil
 }
 
 // delete-restaurant command.
@@ -145,7 +127,7 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool, *OrderupError) {
 
 // list command
 // list [restaurant name]
-func (o *Orderup) list(cmd *Cmd) (string, bool, *OrderupError) {
+func (o *Orderup) listCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	if len(cmd.Args) != 1 {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
@@ -168,7 +150,7 @@ func (o *Orderup) list(cmd *Cmd) (string, bool, *OrderupError) {
 
 // history command
 // history [restaurant name]
-func (o *Orderup) history(cmd *Cmd) (string, bool, *OrderupError) {
+func (o *Orderup) historyCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	if len(cmd.Args) != 1 {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
@@ -250,10 +232,10 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool, *OrderupError) {
 }
 
 // help command.
-func (o *Orderup) help(cmd *Cmd) (string, bool, *OrderupError) {
+func (o *Orderup) helpCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	return `Available commands:
-				/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.
-				/orderup delete-restaurant [name] -- Delete restaurant name and all orders in that restaurant.
+				/orderup create-q [name] -- Create a list of order numbers for queue <name>.
+				/orderup delete-q [name] -- Delete queue <name> and all orders in that queue.
 				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
 				/orderup finish-order [restaurant name]  [order id] -- Finish order.
 				/orderup history [restaurant name] -- Show history for restaurant name.
@@ -262,7 +244,7 @@ func (o *Orderup) help(cmd *Cmd) (string, bool, *OrderupError) {
 
 // Helper function. Return error message with help contents.
 func (o *Orderup) errorMessage(msg string) string {
-	help, _, _ := o.help(nil)
+	help, _, _ := o.helpCmd(nil)
 	return fmt.Sprintf("%s\n%s", msg, help)
 }
 

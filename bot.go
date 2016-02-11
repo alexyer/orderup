@@ -112,7 +112,7 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch cmd.Name {
 	case CREATE_Q_CMD:
-		return o.createRestaurant(cmd)
+		return o.createQueueCmd(cmd)
 	case DELETE_Q_CMD:
 		return o.deleteRestaurant(cmd)
 	case CREATE_ORDER_CMD:
@@ -120,11 +120,11 @@ func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	case FINISH_ORDER_CMD:
 		return o.finishOrder(cmd)
 	case LIST_CMD:
-		return o.list(cmd)
+		return o.listCmd(cmd)
 	case HISTORY_CMD:
-		return o.history(cmd)
+		return o.historyCmd(cmd)
 	default:
-		return o.help(cmd)
+		return o.helpCmd(cmd)
 	}
 }
 

@@ -13,7 +13,7 @@ const (
 	V1 = "v1" // Current API version
 
 	// Command set
-	CREATE_Q_CMD     = "create-restaurant"
+	CREATE_Q_CMD     = "create-q"
 	DELETE_Q_CMD     = "delete-restaurant"
 	CREATE_ORDER_CMD = "create-order"
 	FINISH_ORDER_CMD = "finish-order"

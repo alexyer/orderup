@@ -59,3 +59,26 @@ func (o *Orderup) getHistoryList(queue []byte) (*[]Order, error) {
 	return o.getOrderList(queue, []byte(HISTORY))
 
 }
+
+// Create new queue <name>.
+func (o *Orderup) createQueue(name []byte) error {
+	err := o.db.Update(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(QUEUES))
+
+		// Create new bucket for the new queue.
+		r, err := b.CreateBucket(name)
+		if err != nil {
+			return errors.New("Queue already exists.")
+		}
+
+		// Create 2 subbucktes.
+		// One for pending orders, another for finished orders.
+		_, err = r.CreateBucket([]byte(ORDERLIST))
+		_, err = r.CreateBucket([]byte(HISTORY))
+
+		return err
+	})
+
+	return err
+}
