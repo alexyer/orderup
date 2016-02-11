@@ -14,7 +14,7 @@ import (
 )
 
 // create-q command.
-// create-q [restaurant name]
+// create-q [queue name]
 func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
@@ -32,9 +32,9 @@ func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	return fmt.Sprintf("%s queue created.", name), true, nil
 }
 
-// delete-restaurant command.
-// delete-restaurant [restaurant name]
-func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
+// delete-q command.
+// delete-q [queue name]
+func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
 		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
@@ -44,20 +44,7 @@ func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
 
 	name := cmd.Args[0]
 
-	err := o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
-
-		// Create new bucket for the new restaurant.
-		err = b.DeleteBucket([]byte(name))
-		if err != nil {
-			return errors.New("Restaurant does not exist.")
-		}
-
-		return err
-	})
-
-	if err != nil {
+	if err := o.deleateQueue([]byte(name)); err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 

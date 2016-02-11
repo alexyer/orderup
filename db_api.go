@@ -61,7 +61,7 @@ func (o *Orderup) getHistoryList(queue []byte) (*[]Order, error) {
 
 // Create new queue <name>.
 func (o *Orderup) createQueue(name []byte) error {
-	err := o.db.Update(func(tx *bolt.Tx) (err error) {
+	return o.db.Update(func(tx *bolt.Tx) (err error) {
 		// Get bucket with restaurants.
 		b := tx.Bucket([]byte(QUEUES))
 
@@ -78,6 +78,19 @@ func (o *Orderup) createQueue(name []byte) error {
 
 		return err
 	})
+}
 
-	return err
+// Delete queue <name>.
+func (o *Orderup) deleateQueue(name []byte) error {
+	return o.db.Update(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(RESTAURANTS))
+
+		// Create new bucket for the new restaurant.
+		if err = b.DeleteBucket(name); err != nil {
+			return errors.New("Restaurant does not exist.")
+		}
+
+		return err
+	})
 }

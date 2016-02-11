@@ -14,7 +14,7 @@ const (
 
 	// Command set
 	CREATE_Q_CMD     = "create-q"
-	DELETE_Q_CMD     = "delete-restaurant"
+	DELETE_Q_CMD     = "delete-q"
 	CREATE_ORDER_CMD = "create-order"
 	FINISH_ORDER_CMD = "finish-order"
 	LIST_CMD         = "list"
