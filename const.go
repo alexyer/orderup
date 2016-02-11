@@ -3,12 +3,10 @@ package main
 // Some application constants.
 
 const (
-	// FIXME(alexyer): remove RESTAURANTS after refactoring.
-	RESTAURANTS = "restaurants" // Restaurants database bucket
-	QUEUES      = RESTAURANTS
-
-	ORDERLIST = "orders"  // Orders list database bucket
-	HISTORY   = "history" // History database bucket
+	QUEUES       = "queues"
+	ORDERLIST    = "orders"        // Orders list database bucket
+	HISTORY      = "history"       // History database bucket
+	ORDERCOUNTER = "order_counter" // Indicates the last order id
 
 	V1 = "v1" // Current API version
 

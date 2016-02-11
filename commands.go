@@ -3,13 +3,9 @@ package main
 // All bot command handlers located here.
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/boltdb/bolt"
 )
 
 // create-q command.
@@ -19,7 +15,7 @@ func (o *Orderup) createQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	case len(cmd.Args) == 0:
 		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
-		return "", true, NewOrderupError("Spaces are not allowed in restaurant name.", ARG_ERR)
+		return "", true, NewOrderupError("Spaces are not allowed in queue name.", ARG_ERR)
 	}
 
 	name := cmd.Args[0]
@@ -38,7 +34,7 @@ func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	case len(cmd.Args) == 0:
 		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
-		return "", true, NewOrderupError("Spaces are not allowed in restaurant name.", ARG_ERR)
+		return "", true, NewOrderupError("Spaces are not allowed in queue name.", ARG_ERR)
 	}
 
 	name := cmd.Args[0]
@@ -51,7 +47,7 @@ func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 }
 
 // create-order command.
-// create-order [restaurant name] [@username] [order]
+// create-order [queue name] [@username] [order]
 func (o *Orderup) createOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	var (
 		username   string
@@ -85,7 +81,7 @@ func (o *Orderup) createOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 }
 
 // list command
-// list [restaurant name]
+// list [queue name]
 func (o *Orderup) listCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	if len(cmd.Args) != 1 {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
@@ -108,7 +104,7 @@ func (o *Orderup) listCmd(cmd *Cmd) (string, bool, *OrderupError) {
 }
 
 // history command
-// history [restaurant name]
+// history [queue name]
 func (o *Orderup) historyCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	if len(cmd.Args) != 1 {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
@@ -131,63 +127,30 @@ func (o *Orderup) historyCmd(cmd *Cmd) (string, bool, *OrderupError) {
 }
 
 // finish-order command
-// finish-order [restaurant name] [order id]
-func (o *Orderup) finishOrder(cmd *Cmd) (string, bool, *OrderupError) {
+// finish-order [queue name] [order id]
+func (o *Orderup) finishOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	var (
-		order     Order
-		orderData []byte
+		order *Order
 	)
 
 	if len(cmd.Args) != 2 {
 		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
-	restaurantName := cmd.Args[0]
+	name := cmd.Args[0]
 	orderId, err := strconv.Atoi(cmd.Args[1])
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	err = o.db.Batch(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
-
-		restaurant := b.Bucket([]byte(restaurantName))
-		if restaurant == nil {
-			return errors.New(fmt.Sprintf("Restaurant %s does not exist", restaurantName))
-		}
-
-		orders := restaurant.Bucket([]byte(ORDERLIST))
-		history := restaurant.Bucket([]byte(HISTORY))
-
-		if orderId > orders.Stats().KeyN+1 {
-			return errors.New("Too big order id. Order does not exist yet.")
-		}
-
-		orderData = orders.Get(itob(orderId))
-		if orderData == nil {
-			return errors.New("Order is already finished.")
-		}
-
-		// Delete order from the orders list
-		if err := orders.Delete(itob(orderId)); err != nil {
-			return err
-		}
-
-		// Put order in the history list
-		return history.Put(itob(orderId), orderData)
-	})
+	order, err = o.finishOrder([]byte(name), orderId)
 
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	if err := json.Unmarshal(orderData, &order); err != nil {
-		return "", true, NewOrderupError(err.Error(), CMD_ERR)
-	}
-
 	return fmt.Sprintf("%s your order is finished. %s: Order: %d. %s",
-		order.Username, restaurantName, order.Id, order.Order), true, nil
+		order.Username, name, order.Id, order.Order), true, nil
 }
 
 // help command.
@@ -195,10 +158,10 @@ func (o *Orderup) helpCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	return `Available commands:
 				/orderup create-q [name] -- Create a list of order numbers for queue <name>.
 				/orderup delete-q [name] -- Delete queue <name> and all orders in that queue.
-				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
-				/orderup finish-order [restaurant name]  [order id] -- Finish order.
-				/orderup history [restaurant name] -- Show history for restaurant name.
-				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, true, nil
+				/orderup create-order [queue name] [@username] [order] -- Create a new order.
+				/orderup finish-order [queue name]  [order id] -- Finish order.
+				/orderup history [queue name] -- Show history for queue name.
+				/orderup list [queue name] -- Get the list of orders for queue name.`, true, nil
 }
 
 // Helper function. Return error message with help contents.

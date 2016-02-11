@@ -8,3 +8,9 @@ func itob(v int) []byte {
 	binary.BigEndian.PutUint64(b, uint64(v))
 	return b
 }
+
+// Convert 8-byte big endian representation to int64.
+func btoi(bytes []byte) uint64 {
+	val := binary.BigEndian.Uint64(bytes)
+	return val
+}

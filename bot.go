@@ -55,7 +55,7 @@ func initDb(dbFile string) (*bolt.DB, error) {
 	db, err := bolt.Open(dbFile, 0600, nil)
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(RESTAURANTS))
+		_, err := tx.CreateBucketIfNotExists([]byte(QUEUES))
 		return err
 	})
 
@@ -119,7 +119,7 @@ func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	case CREATE_ORDER_CMD:
 		return o.createOrderCmd(cmd)
 	case FINISH_ORDER_CMD:
-		return o.finishOrder(cmd)
+		return o.finishOrderCmd(cmd)
 	case LIST_CMD:
 		return o.listCmd(cmd)
 	case HISTORY_CMD:

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/boltdb/bolt"
 )
@@ -13,19 +14,19 @@ import (
 // Get orders for the queue.
 // General function to get list of orders from the queue.
 // bucket can be ORDERLIST or HISTORY.
-func (o *Orderup) getOrderList(queue []byte, bucket []byte) (*[]Order, error) {
+func (o *Orderup) getOrderList(queueName []byte, bucket []byte) (*[]Order, error) {
 	var orderList []Order
 
 	err := o.db.View(func(tx *bolt.Tx) (err error) {
 		// Get bucket with restaurants.
 		b := tx.Bucket([]byte(QUEUES))
 
-		restaurant := b.Bucket(queue)
-		if restaurant == nil {
-			return NonExistentQueue(string(queue))
+		queue := b.Bucket(queueName)
+		if queue == nil {
+			return NonExistentQueue(string(queueName))
 		}
 
-		orders := restaurant.Bucket(bucket)
+		orders := queue.Bucket(bucket)
 		c := orders.Cursor()
 
 		// Iterate over all orders, decode and store in the orders list
@@ -75,6 +76,7 @@ func (o *Orderup) createQueue(name []byte) error {
 		// One for pending orders, another for finished orders.
 		_, err = r.CreateBucket([]byte(ORDERLIST))
 		_, err = r.CreateBucket([]byte(HISTORY))
+		err = r.Put([]byte(ORDERCOUNTER), itob(0))
 
 		return err
 	})
@@ -84,9 +86,9 @@ func (o *Orderup) createQueue(name []byte) error {
 func (o *Orderup) deleteQueue(name []byte) error {
 	return o.db.Update(func(tx *bolt.Tx) (err error) {
 		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
+		b := tx.Bucket([]byte(QUEUES))
 
-		// Create new bucket for the new restaurant.
+		// Create new bucket for the new queue.
 		if err = b.DeleteBucket(name); err != nil {
 			return errors.New("Restaurant does not exist.")
 		}
@@ -97,7 +99,7 @@ func (o *Orderup) deleteQueue(name []byte) error {
 
 // Create <order> in the <queue> for <username>.
 // Return order id and orders count.
-func (o *Orderup) createOrder(queue []byte, username, order string) (int, int, error) {
+func (o *Orderup) createOrder(queueName []byte, username, order string) (int, int, error) {
 	var (
 		id         uint64
 		orderCount int
@@ -105,14 +107,14 @@ func (o *Orderup) createOrder(queue []byte, username, order string) (int, int, e
 
 	err := o.db.Update(func(tx *bolt.Tx) (err error) {
 		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
+		b := tx.Bucket([]byte(QUEUES))
 
-		restaurant := b.Bucket(queue)
-		if restaurant == nil {
-			return NonExistentQueue(string(queue))
+		queue := b.Bucket(queueName)
+		if queue == nil {
+			return NonExistentQueue(string(queueName))
 		}
 
-		orders := restaurant.Bucket([]byte(ORDERLIST))
+		orders := queue.Bucket([]byte(ORDERLIST))
 
 		// Prepare order data
 		id, _ = orders.NextSequence()
@@ -129,9 +131,61 @@ func (o *Orderup) createOrder(queue []byte, username, order string) (int, int, e
 			return err
 		}
 
+		// Update order counter
+		queue.Put([]byte(ORDERCOUNTER), itob(int(id)))
+
 		// Store order into the database
 		return orders.Put(itob(int(id)), buf)
 	})
 
 	return int(id), orderCount, err
+}
+
+// Finish order <orderId> in the <queue>.
+func (o *Orderup) finishOrder(queueName []byte, orderId int) (*Order, error) {
+	var (
+		order     Order
+		orderData []byte
+	)
+
+	err := o.db.Batch(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(QUEUES))
+
+		queue := b.Bucket(queueName)
+		if queue == nil {
+			return errors.New(fmt.Sprintf("Restaurant %s does not exist", queue))
+		}
+
+		orders := queue.Bucket([]byte(ORDERLIST))
+		history := queue.Bucket([]byte(HISTORY))
+		orderCounter := int(btoi(queue.Get([]byte(ORDERCOUNTER))))
+
+		if orderId > orderCounter {
+			return errors.New("Too big order id. Order does not exist yet.")
+		}
+
+		orderData = orders.Get(itob(orderId))
+		if orderData == nil {
+			return errors.New("Order is already finished.")
+		}
+
+		// Delete order from the orders list
+		if err := orders.Delete(itob(orderId)); err != nil {
+			return err
+		}
+
+		// Put order in the history list
+		return history.Put(itob(orderId), orderData)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(orderData, &order); err != nil {
+		return nil, err
+	}
+
+	return &order, nil
 }
