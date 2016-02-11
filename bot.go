@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/mux"
 )
 
 // Command struct.
@@ -17,18 +18,38 @@ type Cmd struct {
 }
 
 type Orderup struct {
-	db *bolt.DB
+	db       *bolt.DB
+	password string
 }
 
-func NewOrderup(dbFile string) (*Orderup, error) {
+func NewOrderup(dbFile, password string) (*Orderup, error) {
 	db, err := initDb(dbFile)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Orderup{
-		db: db,
+		db:       db,
+		password: password,
 	}, nil
+}
+
+// Serve web API.
+func (o *Orderup) makeAPI(apiVersion string, mux *mux.Router) {
+	switch apiVersion {
+	case V1:
+		for _, route := range o.getAPIv1().Routes {
+			mux.HandleFunc(route.Path, route.HandlerFunc).Methods(route.Methods...)
+		}
+
+	default:
+		panic("Unknown API version.")
+	}
+}
+
+// Serve Slack API.
+func (o *Orderup) makeRequestHandler(mux *mux.Router) {
+	mux.HandleFunc("/orderup", o.requestHandler)
 }
 
 // Open an initialize database.
@@ -36,7 +57,7 @@ func initDb(dbFile string) (*bolt.DB, error) {
 	db, err := bolt.Open(dbFile, 0600, nil)
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(RESTAURANTS))
+		_, err := tx.CreateBucketIfNotExists([]byte(QUEUES))
 		return err
 	})
 
@@ -44,7 +65,7 @@ func initDb(dbFile string) (*bolt.DB, error) {
 }
 
 // Handle requests to orderup bot.
-func (o *Orderup) RequestHandler(w http.ResponseWriter, r *http.Request) {
+func (o *Orderup) requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	err := r.ParseForm()
 	if err != nil {
@@ -56,7 +77,19 @@ func (o *Orderup) RequestHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := o.parseCmd(r.PostForm["text"][0])
 
 	// Execute command
-	if response, inChannel := o.execCmd(cmd); inChannel {
+
+	response, inChannel, cmdErr := o.execCmd(cmd)
+
+	if cmdErr != nil {
+		switch cmdErr.ErrType {
+		case ARG_ERR:
+			response = o.errorMessage(cmdErr.Error())
+		default:
+			response = cmdErr.Error()
+		}
+	}
+
+	if inChannel {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, fmt.Sprintf(`{"response_type":"in_channel","text":"%s"}`, response))
 	} else {
@@ -79,20 +112,22 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 }
 
 // Execute command.
-func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
+func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch cmd.Name {
-	case "create-restaurant":
-		return o.createRestaurant(cmd)
-	case "create-order":
-		return o.createOrder(cmd)
-	case "finish-order":
-		return o.finishOrder(cmd)
-	case "list":
-		return o.list(cmd)
-	case "history":
-		return o.history(cmd)
+	case CREATE_Q_CMD:
+		return o.createQueueCmd(cmd)
+	case DELETE_Q_CMD:
+		return o.deleteQueueCmd(cmd)
+	case CREATE_ORDER_CMD:
+		return o.createOrderCmd(cmd)
+	case FINISH_ORDER_CMD:
+		return o.finishOrderCmd(cmd)
+	case LIST_CMD:
+		return o.listCmd(cmd)
+	case HISTORY_CMD:
+		return o.historyCmd(cmd)
 	default:
-		return o.help(cmd)
+		return o.helpCmd(cmd)
 	}
 }
 
