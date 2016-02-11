@@ -95,7 +95,7 @@ func (o *Orderup) listCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	}
 
 	// Format orders list properly
-	result := fmt.Sprintf("%s: history:\n", queueName)
+	result := fmt.Sprintf("%s: pending orders:\n", queueName)
 	for _, order := range *ordersList {
 		result += order.String() + "\n"
 	}
