@@ -16,3 +16,8 @@ type Route struct {
 type API struct {
 	Routes []Route
 }
+
+type APIErrorResponse struct {
+	Response string   `json:"response"`
+	Errors   []string `json:"errors"`
+}

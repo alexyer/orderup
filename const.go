@@ -16,4 +16,7 @@ const (
 	FINISH_ORDER_CMD = "finish-order"
 	LIST_CMD         = "list"
 	HISTORY_CMD      = "history"
+
+	SUCCESS_RESPONSE = "success"
+	ERROR_RESPONSE   = "error"
 )

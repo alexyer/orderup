@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -22,6 +21,34 @@ type listRequest struct {
 	Name string `json:name`
 }
 
+type listResponse struct {
+	Response string   `json:"response"`
+	Orders   *[]Order `json:"orders"`
+}
+
+func (o *Orderup) writeAPIResponse(w http.ResponseWriter, response []byte) {
+	w.Header().Set("Content-type", "application/json")
+	w.Write(response)
+}
+
+// Encode and return error response to user.
+func (o *Orderup) writeAPIErrorResponse(w http.ResponseWriter, apiErr error) {
+	apiResponse := &APIErrorResponse{
+		Response: ERROR_RESPONSE,
+		Errors:   []string{apiErr.Error()},
+	}
+
+	response, err := json.Marshal(apiResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-type", "application/json")
+	w.Write(response)
+}
+
+// list command.
 func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
@@ -32,5 +59,23 @@ func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(req)
+	orders, cmdErr := o.getOrderList([]byte(req.Name))
+
+	if cmdErr != nil {
+		o.writeAPIErrorResponse(w, cmdErr)
+		return
+	}
+
+	apiResponse := &listResponse{
+		Response: "success",
+		Orders:   orders,
+	}
+
+	response, err := json.Marshal(apiResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	o.writeAPIResponse(w, response)
 }
