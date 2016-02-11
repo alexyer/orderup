@@ -30,6 +30,11 @@ func (o *Orderup) getAPIv1() *API {
 				HandlerFunc: o.deleteQueueAPIHandler,
 				Methods:     []string{"DELETE"},
 			},
+			Route{
+				Path:        API_PREFIX + "/v1/queues/order",
+				HandlerFunc: o.createOrderAPIHandler,
+				Methods:     []string{"POST"},
+			},
 		},
 	}
 }
@@ -166,6 +171,29 @@ func (o *Orderup) deleteQueueAPIHandler(w http.ResponseWriter, r *http.Request) 
 			Response string
 		}{
 			Response: fmt.Sprintf("Queue %s deleted.", req["name"]),
+		}, nil
+	})
+}
+
+// create-order command.
+func (o *Orderup) createOrderAPIHandler(w http.ResponseWriter, r *http.Request) {
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" || req["user"] == "" || req["description"] == "" {
+			return nil, WrongArgsError()
+		}
+
+		req["user"] = "@" + req["user"]
+
+		id, orderCount, cmdErr := o.createOrder([]byte(req["name"]), req["user"], req["description"])
+		if cmdErr != nil {
+			return nil, cmdErr
+		}
+
+		return struct {
+			Response string
+		}{
+			Response: fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
+				req["name"], id, req["user"], req["description"], req["description"], orderCount),
 		}, nil
 	})
 }
