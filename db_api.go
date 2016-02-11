@@ -94,3 +94,44 @@ func (o *Orderup) deleteQueue(name []byte) error {
 		return err
 	})
 }
+
+// Create <order> in the <queue> for <username>.
+// Return order id and orders count.
+func (o *Orderup) createOrder(queue []byte, username, order string) (int, int, error) {
+	var (
+		id         uint64
+		orderCount int
+	)
+
+	err := o.db.Update(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(RESTAURANTS))
+
+		restaurant := b.Bucket(queue)
+		if restaurant == nil {
+			return NonExistentQueue(string(queue))
+		}
+
+		orders := restaurant.Bucket([]byte(ORDERLIST))
+
+		// Prepare order data
+		id, _ = orders.NextSequence()
+		orderCount = orders.Stats().KeyN
+
+		// JSON serialize order
+		buf, err := json.Marshal(&Order{
+			Username: username,
+			Order:    order,
+			Id:       int(id),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// Store order into the database
+		return orders.Put(itob(int(id)), buf)
+	})
+
+	return int(id), orderCount, err
+}

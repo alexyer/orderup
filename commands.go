@@ -3,7 +3,6 @@ package main
 // All bot command handlers located here.
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,13 +52,14 @@ func (o *Orderup) deleteQueueCmd(cmd *Cmd) (string, bool, *OrderupError) {
 
 // create-order command.
 // create-order [restaurant name] [@username] [order]
-func (o *Orderup) createOrder(cmd *Cmd) (string, bool, *OrderupError) {
+func (o *Orderup) createOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	var (
-		username       string
-		restaurantName string
-		order          string
-		id             uint64
-		orderCount     int
+		username   string
+		name       string
+		order      string
+		id         int
+		orderCount int
+		err        error
 	)
 	switch {
 	case len(cmd.Args) < 3:
@@ -71,45 +71,17 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool, *OrderupError) {
 		return "", true, NewOrderupError("Missing username", ARG_ERR)
 	}
 
-	restaurantName = cmd.Args[0]
+	name = cmd.Args[0]
+	order = strings.Join(cmd.Args[2:], " ")
 
-	err := o.db.Update(func(tx *bolt.Tx) (err error) {
-		// Get bucket with restaurants.
-		b := tx.Bucket([]byte(RESTAURANTS))
-
-		restaurant := b.Bucket([]byte(restaurantName))
-		if restaurant == nil {
-			return errors.New(fmt.Sprintf("Restaurant %s does not exist", restaurantName))
-		}
-
-		orders := restaurant.Bucket([]byte(ORDERLIST))
-
-		// Prepare order data
-		id, _ = orders.NextSequence()
-		order = strings.Join(cmd.Args[2:], " ")
-		orderCount = orders.Stats().KeyN
-
-		// JSON serialize order
-		buf, err := json.Marshal(&Order{
-			Username: username,
-			Order:    order,
-			Id:       int(id),
-		})
-
-		if err != nil {
-			return err
-		}
-
-		// Store order into the database
-		return orders.Put(itob(int(id)), buf)
-	})
+	id, orderCount, err = o.createOrder([]byte(name), username, order)
 
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	return fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
-		restaurantName, int(id), username, order, order, orderCount), true, nil
+		name, int(id), username, order, order, orderCount), true, nil
 }
 
 // list command
@@ -233,11 +205,4 @@ func (o *Orderup) helpCmd(cmd *Cmd) (string, bool, *OrderupError) {
 func (o *Orderup) errorMessage(msg string) string {
 	help, _, _ := o.helpCmd(nil)
 	return fmt.Sprintf("%s\n%s", msg, help)
-}
-
-// Convert int to 8-byte big endian representation.
-func itob(v int) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(v))
-	return b
 }

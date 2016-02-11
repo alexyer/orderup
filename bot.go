@@ -117,7 +117,7 @@ func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	case DELETE_Q_CMD:
 		return o.deleteQueueCmd(cmd)
 	case CREATE_ORDER_CMD:
-		return o.createOrder(cmd)
+		return o.createOrderCmd(cmd)
 	case FINISH_ORDER_CMD:
 		return o.finishOrder(cmd)
 	case LIST_CMD:
