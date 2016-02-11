@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -18,9 +19,16 @@ func (o *Orderup) getAPIv1() *API {
 				HandlerFunc: o.historyAPIHandler,
 				Methods:     []string{"GET"},
 			},
+			Route{
+				Path:        API_PREFIX + "/v1/queues",
+				HandlerFunc: o.createQueueAPIHandler,
+				Methods:     []string{"POST"},
+			},
 		},
 	}
 }
+
+// Sturctures for encoding/decoding API calls.
 
 type listRequest struct {
 	Name string `json:name`
@@ -29,6 +37,14 @@ type listRequest struct {
 type listResponse struct {
 	Response string   `json:"response"`
 	Orders   *[]Order `json:"orders"`
+}
+
+type queueRequest struct {
+	Name string `json:name`
+}
+
+type queueResponse struct {
+	Response string `json:"response"`
 }
 
 func (o *Orderup) writeAPIResponse(w http.ResponseWriter, response []byte) {
@@ -116,6 +132,42 @@ func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
 	apiResponse := &listResponse{
 		Response: "success",
 		Orders:   orders,
+	}
+
+	response, err := json.Marshal(apiResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	o.writeAPIResponse(w, response)
+}
+
+// create-q command.
+func (o *Orderup) createQueueAPIHandler(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+
+	req := &queueRequest{}
+
+	if err := decoder.Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		o.writeAPIErrorResponse(w, WrongArgsError())
+		return
+	}
+
+	cmdErr := o.createQueue([]byte(req.Name))
+
+	if cmdErr != nil {
+		o.writeAPIErrorResponse(w, cmdErr)
+		return
+	}
+
+	apiResponse := &listResponse{
+		Response: fmt.Sprintf("Queue %s created.", req.Name),
 	}
 
 	response, err := json.Marshal(apiResponse)
