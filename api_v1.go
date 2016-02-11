@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 // Get APIv1 layout.
@@ -34,6 +35,11 @@ func (o *Orderup) getAPIv1() *API {
 				Path:        API_PREFIX + "/v1/queues/order",
 				HandlerFunc: o.createOrderAPIHandler,
 				Methods:     []string{"POST"},
+			},
+			Route{
+				Path:        API_PREFIX + "/v1/queues/orders/finish",
+				HandlerFunc: o.finishOrderAPIHandler,
+				Methods:     []string{"PUT"},
 			},
 		},
 	}
@@ -107,7 +113,7 @@ func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 			Response string   `json:"response"`
 			Orders   *[]Order `json:"orders"`
 		}{
-			Response: "success",
+			Response: SUCCESS_RESPONSE,
 			Orders:   orders,
 		}, nil
 	})
@@ -129,7 +135,7 @@ func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
 			Response string   `json:"response"`
 			Orders   *[]Order `json:"orders"`
 		}{
-			Response: "success",
+			Response: SUCCESS_RESPONSE,
 			Orders:   orders,
 		}, nil
 	})
@@ -184,16 +190,46 @@ func (o *Orderup) createOrderAPIHandler(w http.ResponseWriter, r *http.Request) 
 
 		req["user"] = "@" + req["user"]
 
-		id, orderCount, cmdErr := o.createOrder([]byte(req["name"]), req["user"], req["description"])
+		order, orderCount, cmdErr := o.createOrder([]byte(req["name"]), req["user"], req["description"])
 		if cmdErr != nil {
 			return nil, cmdErr
 		}
 
 		return struct {
-			Response string
+			Response    string `json:"response"`
+			Order       *Order `json:"order"`
+			OrdersAhead int    `json:"orders_ahead"`
 		}{
-			Response: fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
-				req["name"], id, req["user"], req["description"], req["description"], orderCount),
+			Response:    SUCCESS_RESPONSE,
+			Order:       order,
+			OrdersAhead: orderCount,
+		}, nil
+	})
+}
+
+// finish-order command.
+func (o *Orderup) finishOrderAPIHandler(w http.ResponseWriter, r *http.Request) {
+	o.apiHandler(w, r, func(req map[string]string) (interface{}, error) {
+		if req["name"] == "" || req["id"] == "" {
+			return nil, WrongArgsError()
+		}
+
+		orderId, err := strconv.Atoi(req["id"])
+		if err != nil {
+			return nil, err
+		}
+
+		order, err := o.finishOrder([]byte(req["name"]), orderId)
+		if err != nil {
+			return nil, err
+		}
+
+		return struct {
+			Response string `json:"response"`
+			Order    *Order `json:"order"`
+		}{
+			Response: SUCCESS_RESPONSE,
+			Order:    order,
 		}, nil
 	})
 }

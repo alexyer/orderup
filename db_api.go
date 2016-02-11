@@ -98,10 +98,10 @@ func (o *Orderup) deleteQueue(name []byte) error {
 }
 
 // Create <order> in the <queue> for <username>.
-// Return order id and orders count.
-func (o *Orderup) createOrder(queueName []byte, username, order string) (int, int, error) {
+// Return created order and orders count.
+func (o *Orderup) createOrder(queueName []byte, username, orderStr string) (*Order, int, error) {
 	var (
-		id         uint64
+		order      *Order
 		orderCount int
 	)
 
@@ -117,15 +117,16 @@ func (o *Orderup) createOrder(queueName []byte, username, order string) (int, in
 		orders := queue.Bucket([]byte(ORDERLIST))
 
 		// Prepare order data
-		id, _ = orders.NextSequence()
+		id, _ := orders.NextSequence()
 		orderCount = orders.Stats().KeyN
 
-		// JSON serialize order
-		buf, err := json.Marshal(&Order{
+		order = &Order{
 			Username: username,
-			Order:    order,
+			Order:    orderStr,
 			Id:       int(id),
-		})
+		}
+		// JSON serialize order
+		buf, err := json.Marshal(order)
 
 		if err != nil {
 			return err
@@ -138,7 +139,7 @@ func (o *Orderup) createOrder(queueName []byte, username, order string) (int, in
 		return orders.Put(itob(int(id)), buf)
 	})
 
-	return int(id), orderCount, err
+	return order, orderCount, err
 }
 
 // Finish order <orderId> in the <queue>.

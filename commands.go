@@ -53,8 +53,8 @@ func (o *Orderup) createOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 		username   string
 		name       string
 		order      string
-		id         int
 		orderCount int
+		newOrder   *Order
 		err        error
 	)
 	switch {
@@ -70,14 +70,14 @@ func (o *Orderup) createOrderCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	name = cmd.Args[0]
 	order = strings.Join(cmd.Args[2:], " ")
 
-	id, orderCount, err = o.createOrder([]byte(name), username, order)
+	newOrder, orderCount, err = o.createOrder([]byte(name), username, order)
 
 	if err != nil {
 		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	return fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
-		name, int(id), username, order, order, orderCount), true, nil
+		name, newOrder.Id, newOrder.Username, order, order, orderCount), true, nil
 }
 
 // list command
