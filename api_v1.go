@@ -13,6 +13,11 @@ func (o *Orderup) getAPIv1() *API {
 				HandlerFunc: o.listAPIHandler,
 				Methods:     []string{"GET"},
 			},
+			Route{
+				Path:        API_PREFIX + "/v1/queues/orders/history",
+				HandlerFunc: o.historyAPIHandler,
+				Methods:     []string{"GET"},
+			},
 		},
 	}
 }
@@ -59,6 +64,11 @@ func (o *Orderup) listAPIHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Name == "" {
+		o.writeAPIErrorResponse(w, WrongArgsError())
+		return
+	}
+
 	orders, cmdErr := o.getPendingOrderList([]byte(req.Name))
 
 	if cmdErr != nil {
@@ -88,6 +98,11 @@ func (o *Orderup) historyAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := decoder.Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		o.writeAPIErrorResponse(w, WrongArgsError())
 		return
 	}
 

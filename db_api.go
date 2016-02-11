@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/boltdb/bolt"
 )
@@ -23,7 +22,7 @@ func (o *Orderup) getOrderList(queue []byte, bucket []byte) (*[]Order, error) {
 
 		restaurant := b.Bucket(queue)
 		if restaurant == nil {
-			return errors.New(fmt.Sprintf("Queue %s does not exist", queue))
+			return NonExistentQueue(string(queue))
 		}
 
 		orders := restaurant.Bucket(bucket)

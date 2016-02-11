@@ -1,5 +1,10 @@
 package main
 
+import (
+	"errors"
+	"fmt"
+)
+
 // Custom bot errors.
 
 // Error types
@@ -22,4 +27,12 @@ func NewOrderupError(msg string, errType int) *OrderupError {
 
 func (e *OrderupError) Error() string {
 	return e.msg
+}
+
+func NonExistentQueue(queue string) error {
+	return errors.New(fmt.Sprintf("Queue %s does not exist.", queue))
+}
+
+func WrongArgsError() error {
+	return errors.New("Wrong arguments.")
 }
