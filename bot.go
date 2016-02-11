@@ -31,6 +31,24 @@ func NewOrderup(dbFile string) (*Orderup, error) {
 	}, nil
 }
 
+// Serve web API.
+func (o *Orderup) makeAPI(apiVersion string, mux *http.ServeMux) {
+	switch apiVersion {
+	case V1:
+		for _, route := range o.getAPIv1().Routes {
+			mux.HandleFunc(route.Path, route.HandlerFunc)
+		}
+
+	default:
+		panic("Unknown API version.")
+	}
+}
+
+// Serve Slack API.
+func (o *Orderup) makeRequestHandler(mux *http.ServeMux) {
+	mux.HandleFunc("/orderup", o.requestHandler)
+}
+
 // Open an initialize database.
 func initDb(dbFile string) (*bolt.DB, error) {
 	db, err := bolt.Open(dbFile, 0600, nil)
@@ -44,7 +62,7 @@ func initDb(dbFile string) (*bolt.DB, error) {
 }
 
 // Handle requests to orderup bot.
-func (o *Orderup) RequestHandler(w http.ResponseWriter, r *http.Request) {
+func (o *Orderup) requestHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	err := r.ParseForm()
 	if err != nil {
@@ -81,17 +99,17 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 // Execute command.
 func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
 	switch cmd.Name {
-	case "create-restaurant":
+	case CREATE_Q_CMD:
 		return o.createRestaurant(cmd)
-	case "delete-restaurant":
+	case DELETE_Q_CMD:
 		return o.deleteRestaurant(cmd)
-	case "create-order":
+	case CREATE_ORDER_CMD:
 		return o.createOrder(cmd)
-	case "finish-order":
+	case FINISH_ORDER_CMD:
 		return o.finishOrder(cmd)
-	case "list":
+	case LIST_CMD:
 		return o.list(cmd)
-	case "history":
+	case HISTORY_CMD:
 		return o.history(cmd)
 	default:
 		return o.help(cmd)

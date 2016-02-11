@@ -41,8 +41,12 @@ func main() {
 		}
 	}()
 
+	mux := http.NewServeMux()
+
+	bot.makeAPI(V1, mux)        // Make API handlers in the mux
+	bot.makeRequestHandler(mux) // Make Slack API endpoint
+
 	log.Printf("Orderup started on %s:%d.\n", host, port)
 
-	http.HandleFunc("/orderup", bot.RequestHandler)
-	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), mux))
 }
