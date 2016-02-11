@@ -50,6 +50,38 @@ func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool) {
 	return fmt.Sprintf("%s restaurant created.", name), true
 }
 
+// delete-restaurant command.
+// delete-restaurant [restaurant name]
+func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool) {
+	switch {
+	case len(cmd.Args) == 0:
+		return "Restaurant name is not given.", true
+	case len(cmd.Args) != 1:
+		return "Spaces are not allowed in restaurant name.", true
+	}
+
+	name := cmd.Args[0]
+
+	err := o.db.Update(func(tx *bolt.Tx) (err error) {
+		// Get bucket with restaurants.
+		b := tx.Bucket([]byte(RESTAURANTS))
+
+		// Create new bucket for the new restaurant.
+		err = b.DeleteBucket([]byte(name))
+		if err != nil {
+			return errors.New("Restaurant does not exist.")
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return err.Error(), true
+	}
+
+	return fmt.Sprintf("Restaurant: %s deleted.", name), true
+}
+
 // create-order command.
 // create-order [restaurant name] [@username] [order]
 func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
@@ -273,6 +305,7 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
 func (o *Orderup) help(cmd *Cmd) (string, bool) {
 	return `Available commands:
 				/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.
+				/orderup delete-restaurant [name] -- Delete restaurant name and all orders in that restaurant.
 				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
 				/orderup finish-order [restaurant name]  [order id] -- Finish order.
 				/orderup history [restaurant name] -- Show history for restaurant name.

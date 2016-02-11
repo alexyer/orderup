@@ -83,6 +83,8 @@ func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
 	switch cmd.Name {
 	case "create-restaurant":
 		return o.createRestaurant(cmd)
+	case "delete-restaurant":
+		return o.deleteRestaurant(cmd)
 	case "create-order":
 		return o.createOrder(cmd)
 	case "finish-order":
