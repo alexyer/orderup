@@ -13,32 +13,32 @@ func (o *Orderup) getAPIv1() *API {
 		Routes: []Route{
 			Route{
 				Path:        API_PREFIX + "/v1/queues/orders/list",
-				HandlerFunc: o.listAPIHandler,
+				HandlerFunc: o.BasicAuth(o.listAPIHandler),
 				Methods:     []string{"GET"},
 			},
 			Route{
 				Path:        API_PREFIX + "/v1/queues/orders/history",
-				HandlerFunc: o.historyAPIHandler,
+				HandlerFunc: o.BasicAuth(o.historyAPIHandler),
 				Methods:     []string{"GET"},
 			},
 			Route{
 				Path:        API_PREFIX + "/v1/queues",
-				HandlerFunc: o.createQueueAPIHandler,
+				HandlerFunc: o.BasicAuth(o.createQueueAPIHandler),
 				Methods:     []string{"POST"},
 			},
 			Route{
 				Path:        API_PREFIX + "/v1/queues",
-				HandlerFunc: o.deleteQueueAPIHandler,
+				HandlerFunc: o.BasicAuth(o.deleteQueueAPIHandler),
 				Methods:     []string{"DELETE"},
 			},
 			Route{
 				Path:        API_PREFIX + "/v1/queues/order",
-				HandlerFunc: o.createOrderAPIHandler,
+				HandlerFunc: o.BasicAuth(o.createOrderAPIHandler),
 				Methods:     []string{"POST"},
 			},
 			Route{
 				Path:        API_PREFIX + "/v1/queues/orders/finish",
-				HandlerFunc: o.finishOrderAPIHandler,
+				HandlerFunc: o.BasicAuth(o.finishOrderAPIHandler),
 				Methods:     []string{"PUT"},
 			},
 		},

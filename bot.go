@@ -18,17 +18,19 @@ type Cmd struct {
 }
 
 type Orderup struct {
-	db *bolt.DB
+	db       *bolt.DB
+	password string
 }
 
-func NewOrderup(dbFile string) (*Orderup, error) {
+func NewOrderup(dbFile, password string) (*Orderup, error) {
 	db, err := initDb(dbFile)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Orderup{
-		db: db,
+		db:       db,
+		password: password,
 	}, nil
 }
 

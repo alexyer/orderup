@@ -12,22 +12,24 @@ import (
 )
 
 var (
-	host string
-	port int
-	db   string
+	host     string
+	port     int
+	db       string
+	password string
 )
 
 func init() {
 	flag.StringVar(&host, "host", "localhost", "host to listen")
 	flag.IntVar(&port, "port", 5000, "port to listen")
 	flag.StringVar(&db, "db", "orderup.db", "database file")
+	flag.StringVar(&password, "passcode", "", "protection password")
 }
 
 func main() {
 	flag.Parse()
 
 	// Create new instance of bot.
-	bot, err := NewOrderup(db)
+	bot, err := NewOrderup(db, password)
 	if err != nil {
 		log.Fatal(err)
 	}
