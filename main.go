@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -41,7 +43,7 @@ func main() {
 		}
 	}()
 
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 	bot.makeAPI(V1, mux)        // Make API handlers in the mux
 	bot.makeRequestHandler(mux) // Make Slack API endpoint

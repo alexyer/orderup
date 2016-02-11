@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/mux"
 )
 
 // Command struct.
@@ -32,11 +33,11 @@ func NewOrderup(dbFile string) (*Orderup, error) {
 }
 
 // Serve web API.
-func (o *Orderup) makeAPI(apiVersion string, mux *http.ServeMux) {
+func (o *Orderup) makeAPI(apiVersion string, mux *mux.Router) {
 	switch apiVersion {
 	case V1:
 		for _, route := range o.getAPIv1().Routes {
-			mux.HandleFunc(route.Path, route.HandlerFunc)
+			mux.HandleFunc(route.Path, route.HandlerFunc).Methods(route.Methods...)
 		}
 
 	default:
@@ -45,7 +46,7 @@ func (o *Orderup) makeAPI(apiVersion string, mux *http.ServeMux) {
 }
 
 // Serve Slack API.
-func (o *Orderup) makeRequestHandler(mux *http.ServeMux) {
+func (o *Orderup) makeRequestHandler(mux *mux.Router) {
 	mux.HandleFunc("/orderup", o.requestHandler)
 }
 
