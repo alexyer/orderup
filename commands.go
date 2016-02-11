@@ -15,12 +15,12 @@ import (
 
 // create-restaurant command.
 // create-restaurant [restaurant name]
-func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool) {
+func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
-		return "Restaurant name is not given.", true
+		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
-		return "Spaces are not allowed in restaurant name.", true
+		return "", true, NewOrderupError("Spaces are not allowed in restaurant name.", ARG_ERR)
 	}
 
 	name := cmd.Args[0]
@@ -44,20 +44,20 @@ func (o *Orderup) createRestaurant(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	return fmt.Sprintf("%s restaurant created.", name), true
+	return fmt.Sprintf("%s restaurant created.", name), true, nil
 }
 
 // delete-restaurant command.
 // delete-restaurant [restaurant name]
-func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool) {
+func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool, *OrderupError) {
 	switch {
 	case len(cmd.Args) == 0:
-		return "Restaurant name is not given.", true
+		return "", true, NewOrderupError("Restaurant name is not given.", ARG_ERR)
 	case len(cmd.Args) != 1:
-		return "Spaces are not allowed in restaurant name.", true
+		return "", true, NewOrderupError("Spaces are not allowed in restaurant name.", ARG_ERR)
 	}
 
 	name := cmd.Args[0]
@@ -76,15 +76,15 @@ func (o *Orderup) deleteRestaurant(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
-	return fmt.Sprintf("Restaurant: %s deleted.", name), true
+	return fmt.Sprintf("Restaurant: %s deleted.", name), true, nil
 }
 
 // create-order command.
 // create-order [restaurant name] [@username] [order]
-func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
+func (o *Orderup) createOrder(cmd *Cmd) (string, bool, *OrderupError) {
 	var (
 		username       string
 		restaurantName string
@@ -94,12 +94,12 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
 	)
 	switch {
 	case len(cmd.Args) < 3:
-		return o.errorMessage("Wrong arguments"), true
+		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
 	username = cmd.Args[1]
 	if username[0] != '@' {
-		return o.errorMessage("Missing username"), true
+		return "", true, NewOrderupError("Missing username", ARG_ERR)
 	}
 
 	restaurantName = cmd.Args[0]
@@ -136,20 +136,20 @@ func (o *Orderup) createOrder(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	return fmt.Sprintf("%s order %d for %s %s - order %s. There are %d orders ahead of you.",
-		restaurantName, int(id), username, order, order, orderCount), true
+		restaurantName, int(id), username, order, order, orderCount), true, nil
 }
 
 // list command
 // list [restaurant name]
-func (o *Orderup) list(cmd *Cmd) (string, bool) {
+func (o *Orderup) list(cmd *Cmd) (string, bool, *OrderupError) {
 	var ordersList []Order
 
 	if len(cmd.Args) != 1 {
-		return o.errorMessage("Wrong arguments"), true
+		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
 	restaurantName := cmd.Args[0]
@@ -180,7 +180,7 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	// Format orders list properly
@@ -189,16 +189,16 @@ func (o *Orderup) list(cmd *Cmd) (string, bool) {
 		result += order.String() + "\n"
 	}
 
-	return result, true
+	return result, true, nil
 }
 
 // history command
 // history [restaurant name]
-func (o *Orderup) history(cmd *Cmd) (string, bool) {
+func (o *Orderup) history(cmd *Cmd) (string, bool, *OrderupError) {
 	var ordersList []Order
 
 	if len(cmd.Args) != 1 {
-		return o.errorMessage("Wrong arguments"), true
+		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
 	restaurantName := cmd.Args[0]
@@ -229,7 +229,7 @@ func (o *Orderup) history(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	// Format orders list properly
@@ -238,25 +238,25 @@ func (o *Orderup) history(cmd *Cmd) (string, bool) {
 		result += order.String() + "\n"
 	}
 
-	return result, true
+	return result, true, nil
 }
 
 // finish-order command
 // finish-order [restaurant name] [order id]
-func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
+func (o *Orderup) finishOrder(cmd *Cmd) (string, bool, *OrderupError) {
 	var (
 		order     Order
 		orderData []byte
 	)
 
 	if len(cmd.Args) != 2 {
-		return o.errorMessage("Wrong arguments"), true
+		return "", true, NewOrderupError("Wrong arguments", ARG_ERR)
 	}
 
 	restaurantName := cmd.Args[0]
 	orderId, err := strconv.Atoi(cmd.Args[1])
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	err = o.db.Batch(func(tx *bolt.Tx) (err error) {
@@ -290,31 +290,31 @@ func (o *Orderup) finishOrder(cmd *Cmd) (string, bool) {
 	})
 
 	if err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	if err := json.Unmarshal(orderData, &order); err != nil {
-		return err.Error(), true
+		return "", true, NewOrderupError(err.Error(), CMD_ERR)
 	}
 
 	return fmt.Sprintf("%s your order is finished. %s: Order: %d. %s",
-		order.Username, restaurantName, order.Id, order.Order), true
+		order.Username, restaurantName, order.Id, order.Order), true, nil
 }
 
 // help command.
-func (o *Orderup) help(cmd *Cmd) (string, bool) {
+func (o *Orderup) help(cmd *Cmd) (string, bool, *OrderupError) {
 	return `Available commands:
 				/orderup create-restaurant [name] -- Create a list of order numbers for restaurant name.
 				/orderup delete-restaurant [name] -- Delete restaurant name and all orders in that restaurant.
 				/orderup create-order [restaurant name] [@username] [order] -- Create a new order.
 				/orderup finish-order [restaurant name]  [order id] -- Finish order.
 				/orderup history [restaurant name] -- Show history for restaurant name.
-				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, true
+				/orderup list [restaurant name] -- Get the list of orders for restaurant name.`, true, nil
 }
 
 // Helper function. Return error message with help contents.
 func (o *Orderup) errorMessage(msg string) string {
-	help, _ := o.help(nil)
+	help, _, _ := o.help(nil)
 	return fmt.Sprintf("%s\n%s", msg, help)
 }
 

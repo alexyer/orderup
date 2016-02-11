@@ -74,7 +74,19 @@ func (o *Orderup) requestHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := o.parseCmd(r.PostForm["text"][0])
 
 	// Execute command
-	if response, inChannel := o.execCmd(cmd); inChannel {
+
+	response, inChannel, cmdErr := o.execCmd(cmd)
+
+	if cmdErr != nil {
+		switch cmdErr.ErrType {
+		case ARG_ERR:
+			response = o.errorMessage(cmdErr.Error())
+		default:
+			response = cmdErr.Error()
+		}
+	}
+
+	if inChannel {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, fmt.Sprintf(`{"response_type":"in_channel","text":"%s"}`, response))
 	} else {
@@ -97,7 +109,7 @@ func (o *Orderup) parseCmd(cmd string) *Cmd {
 }
 
 // Execute command.
-func (o *Orderup) execCmd(cmd *Cmd) (string, bool) {
+func (o *Orderup) execCmd(cmd *Cmd) (string, bool, *OrderupError) {
 	switch cmd.Name {
 	case CREATE_Q_CMD:
 		return o.createRestaurant(cmd)
