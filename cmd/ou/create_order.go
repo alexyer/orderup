@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -13,7 +12,8 @@ var CREATE_ORDER_API_METHOD = "POST"
 
 func createOrder(c *cli.Context) {
 	if len(c.Args()) < 3 {
-		log.Fatal("Wrong arguments")
+		fmt.Println(WrongArgsError(c))
+		return
 	}
 
 	name := c.Args()[0]

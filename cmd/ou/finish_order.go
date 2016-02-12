@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/codegangsta/cli"
 )
@@ -12,7 +11,8 @@ var FINISH_ORDER_API_METHOD = "PUT"
 
 func finishOrder(c *cli.Context) {
 	if len(c.Args()) != 2 {
-		log.Fatal("Wrong arguments")
+		fmt.Println(WrongArgsError(c))
+		return
 	}
 
 	name := c.Args()[0]

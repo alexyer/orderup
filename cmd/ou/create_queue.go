@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/codegangsta/cli"
 )
@@ -12,7 +11,8 @@ var CREATE_Q_API_METHOD = "POST"
 
 func createQueue(c *cli.Context) {
 	if len(c.Args()) != 1 {
-		log.Fatal("Wrong arguments")
+		fmt.Println(WrongArgsError(c))
+		return
 	}
 
 	name := c.Args()[0]

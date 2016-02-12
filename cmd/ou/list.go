@@ -12,7 +12,8 @@ var LIST_API_METHOD = "GET"
 
 func list(c *cli.Context) {
 	if len(c.Args()) != 1 {
-		log.Fatal("Wrong arguments")
+		fmt.Println(WrongArgsError(c))
+		return
 	}
 
 	name := c.Args()[0]
