@@ -1,4 +1,4 @@
-package main
+package orderup
 
 import "encoding/binary"
 

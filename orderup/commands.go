@@ -1,4 +1,4 @@
-package main
+package orderup
 
 // All bot command handlers located here.
 

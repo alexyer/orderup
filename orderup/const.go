@@ -1,4 +1,4 @@
-package main
+package orderup
 
 // Some application constants.
 

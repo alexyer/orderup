@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
@@ -24,6 +25,7 @@ type Credentials struct {
 	Passcode string `json:"passcode"`
 }
 
+// Persist credentils to disk.
 func WriteCredentials(c *Credentials) error {
 	f, err := os.Create(CRED_FILE)
 	if err != nil {
@@ -40,4 +42,28 @@ func WriteCredentials(c *Credentials) error {
 	_, err = f.Write(buf)
 
 	return err
+}
+
+// Read credentials from disk.
+func ReadCredentials() (*Credentials, error) {
+	f, err := os.Open(CRED_FILE)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	// Read file contents to the buffer.
+	buf, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	cred := Credentials{}
+
+	if err := json.Unmarshal(buf, &cred); err != nil {
+		return nil, err
+	}
+
+	return &cred, nil
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/alexyer/orderup/orderup"
 	"github.com/gorilla/mux"
 )
 
@@ -29,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	// Create new instance of bot.
-	bot, err := NewOrderup(db, password)
+	bot, err := orderup.NewOrderup(db, password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,8 +48,8 @@ func main() {
 
 	mux := mux.NewRouter()
 
-	bot.makeAPI(V1, mux)        // Make API handlers in the mux
-	bot.makeRequestHandler(mux) // Make Slack API endpoint
+	bot.MakeAPI(orderup.V1, mux) // Make API handlers in the mux
+	bot.MakeRequestHandler(mux)  // Make Slack API endpoint
 
 	log.Printf("Orderup started on %s:%d.\n", host, port)
 

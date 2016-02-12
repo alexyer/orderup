@@ -1,4 +1,4 @@
-package main
+package orderup
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func NewOrderup(dbFile, password string) (*Orderup, error) {
 }
 
 // Serve web API.
-func (o *Orderup) makeAPI(apiVersion string, mux *mux.Router) {
+func (o *Orderup) MakeAPI(apiVersion string, mux *mux.Router) {
 	switch apiVersion {
 	case V1:
 		for _, route := range o.getAPIv1().Routes {
@@ -48,7 +48,7 @@ func (o *Orderup) makeAPI(apiVersion string, mux *mux.Router) {
 }
 
 // Serve Slack API.
-func (o *Orderup) makeRequestHandler(mux *mux.Router) {
+func (o *Orderup) MakeRequestHandler(mux *mux.Router) {
 	mux.HandleFunc("/orderup", o.requestHandler)
 }
 

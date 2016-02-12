@@ -32,6 +32,11 @@ func main() {
 				},
 			},
 		},
+		{
+			Name:   "list",
+			Usage:  "get list of the pending orders in the queue",
+			Action: list,
+		},
 	}
 
 	app.Run(os.Args)
