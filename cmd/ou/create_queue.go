@@ -1,0 +1,31 @@
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/codegangsta/cli"
+)
+
+var CREATE_Q_API_ENDPOINT = "/queues"
+var CREATE_Q_API_METHOD = "POST"
+
+func createQueue(c *cli.Context) {
+	if len(c.Args()) != 1 {
+		log.Fatal("Wrong arguments")
+	}
+
+	name := c.Args()[0]
+
+	resp, err := APICall(CREATE_Q_API_ENDPOINT, CREATE_Q_API_METHOD, struct {
+		Name string `json:"name"`
+	}{
+		Name: name,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(resp.Response)
+}

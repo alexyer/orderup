@@ -42,6 +42,11 @@ func main() {
 			Usage:  "get list of the all finished orders in the queue",
 			Action: history,
 		},
+		{
+			Name:   "create-q",
+			Usage:  "create a new queue",
+			Action: createQueue,
+		},
 	}
 
 	app.Run(os.Args)
