@@ -17,9 +17,11 @@ const (
 )
 
 type Response struct {
-	Response string
-	Errors   []string
-	Orders   []orderup.Order
+	Response    string
+	Errors      []string
+	Order       orderup.Order
+	Orders      []orderup.Order
+	OrdersAhead int `json:"orders_ahead"`
 }
 
 func APICall(endpoint, method string, payload interface{}) (*Response, error) {

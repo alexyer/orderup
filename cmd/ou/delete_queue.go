@@ -24,7 +24,8 @@ func deleteQueue(c *cli.Context) {
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
 	fmt.Println(resp.Response)

@@ -52,6 +52,16 @@ func main() {
 			Usage:  "delete a queue",
 			Action: deleteQueue,
 		},
+		{
+			Name:   "finish-order",
+			Usage:  "finish an order in a queue",
+			Action: finishOrder,
+		},
+		{
+			Name:   "create-order",
+			Usage:  "create a new order in a queue",
+			Action: createOrder,
+		},
 	}
 
 	app.Run(os.Args)

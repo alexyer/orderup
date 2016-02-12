@@ -31,7 +31,8 @@ func target(c *cli.Context) {
 
 	// Check if passcode is correct
 	if resp.StatusCode == http.StatusUnauthorized {
-		log.Fatal("Wrong passcode. Check passcode and try again.")
+		fmt.Println(err)
+		return
 	}
 
 	err = WriteCredentials(&Credentials{
