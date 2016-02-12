@@ -49,6 +49,9 @@ func doCall(endpoint, method string, cred *Credentials, buf []byte) (*Response, 
 	req, err := http.NewRequest(method,
 		fmt.Sprintf("http://%s:%d/%s%s", cred.Host, cred.Port, API_PREFIX, endpoint),
 		bytes.NewReader(buf))
+
+	req.SetBasicAuth("", cred.Passcode)
+
 	if err != nil {
 		return nil, err
 	}

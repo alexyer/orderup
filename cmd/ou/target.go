@@ -31,7 +31,7 @@ func target(c *cli.Context) {
 
 	// Check if passcode is correct
 	if resp.StatusCode == http.StatusUnauthorized {
-		fmt.Println(err)
+		fmt.Println("Wrong passcode.")
 		return
 	}
 
