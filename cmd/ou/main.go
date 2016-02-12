@@ -1,42 +1,38 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"log"
-	"net/http"
+	"os"
+
+	"github.com/codegangsta/cli"
 )
-
-var (
-	host     string
-	port     int
-	db       string
-	password string
-)
-
-func init() {
-	flag.StringVar(&host, "host", "localhost", "orderup host")
-	flag.IntVar(&port, "port", 5000, "orderup port")
-	flag.StringVar(&password, "passcode", "", "password")
-}
-
-// Check connection
-func checkConn() {
-	client := http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s:%d/api/v1/queues/orders/list", host, port), nil)
-	req.SetBasicAuth("", password)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		log.Fatal("Wrong passcode. Check passcode and try again.")
-	}
-}
 
 func main() {
-	flag.Parse()
-	checkConn()
+	log.SetFlags(0)
+	app := cli.NewApp()
+	app.Name = "ou"
+	app.Usage = "orderup client"
+	app.Version = "1.0.0"
+
+	app.Commands = []cli.Command{
+		{
+			Name:   "target",
+			Usage:  "save target server location",
+			Action: target,
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "port",
+					Value: 5000,
+					Usage: "orderup port",
+				},
+				cli.StringFlag{
+					Name:  "passcode",
+					Value: "",
+					Usage: "orderup password",
+				},
+			},
+		},
+	}
+
+	app.Run(os.Args)
 }
