@@ -34,32 +34,32 @@ func main() {
 		},
 		{
 			Name:   "list",
-			Usage:  "get list of the pending orders in the queue",
+			Usage:  "[queue name] -- Get the list of orders for queue name",
 			Action: list,
 		},
 		{
 			Name:   "history",
-			Usage:  "get list of the all finished orders in the queue",
+			Usage:  "[queue name] -- Show history for queue name",
 			Action: history,
 		},
 		{
 			Name:   "create-q",
-			Usage:  "create a new queue",
+			Usage:  "[name] -- Create a list of order numbers for queue <name>",
 			Action: createQueue,
 		},
 		{
 			Name:   "delete-q",
-			Usage:  "delete a queue",
+			Usage:  "[name] -- Delete queue <name> and all orders in that queue",
 			Action: deleteQueue,
 		},
 		{
 			Name:   "finish-order",
-			Usage:  "finish an order in a queue",
+			Usage:  "[queue name]  [order id] -- Finish order",
 			Action: finishOrder,
 		},
 		{
 			Name:   "create-order",
-			Usage:  "create a new order in a queue",
+			Usage:  "[queue name] [@username] [order] -- Create a new order",
 			Action: createOrder,
 		},
 	}
