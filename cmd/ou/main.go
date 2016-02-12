@@ -47,6 +47,11 @@ func main() {
 			Usage:  "create a new queue",
 			Action: createQueue,
 		},
+		{
+			Name:   "delete-q",
+			Usage:  "delete a queue",
+			Action: deleteQueue,
+		},
 	}
 
 	app.Run(os.Args)
