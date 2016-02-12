@@ -37,6 +37,11 @@ func main() {
 			Usage:  "get list of the pending orders in the queue",
 			Action: list,
 		},
+		{
+			Name:   "history",
+			Usage:  "get list of the all finished orders in the queue",
+			Action: history,
+		},
 	}
 
 	app.Run(os.Args)

@@ -40,6 +40,7 @@ func encodePayload(payload interface{}) ([]byte, error) {
 	return json.Marshal(payload)
 }
 
+// Perform API request and handle response.
 func doCall(endpoint, method string, cred *Credentials, buf []byte) (*Response, error) {
 	client := http.Client{}
 
@@ -50,16 +51,19 @@ func doCall(endpoint, method string, cred *Credentials, buf []byte) (*Response, 
 		return nil, err
 	}
 
+	// Do request.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
+	// Read response.
 	buf, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
+	// Error check.
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(string(buf))
 	}
